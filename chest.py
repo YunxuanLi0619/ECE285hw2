@@ -19,10 +19,10 @@ from torchmetrics.image.inception import InceptionScore
 # ==========================================
 if torch.backends.mps.is_available():
     device = torch.device("mps")
-    print("✅ Using device: Apple Silicon MPS")
+    print("Using device: Apple Silicon MPS")
 else:
     device = torch.device("cpu")
-    print("⚠️ Using device: CPU")
+    print("Using device: CPU")
 
 IMG_SIZE = 64
 BATCH_SIZE = 64
@@ -54,7 +54,7 @@ def get_dataloaders():
         os.path.join(root_path, "train")
     ]
     train_dir = next((d for d in possible_train_dirs if os.path.exists(d)), None)
-    if train_dir is None: raise FileNotFoundError("❌ 'train' folder not found")
+    if train_dir is None: raise FileNotFoundError("'train' folder not found")
 
     test_dir = train_dir.replace("train", "test")
     if not os.path.exists(test_dir): test_dir = train_dir.replace("train", "val")
@@ -340,9 +340,9 @@ if __name__ == "__main__":
 
     # Step B: Always train from scratch for 50 epochs, do not use old weights
     if os.path.exists(MODEL_PATH):
-        print(f"ℹ️ Existing model detected, will be overwritten after training: {MODEL_PATH}")
+        print(f"Existing model detected, will be overwritten after training: {MODEL_PATH}")
 
-    print(f"🚀 Starting training from scratch (Epochs={EPOCHS})...")
+    print(f"Starting training from scratch (Epochs={EPOCHS})...")
     for epoch in range(EPOCHS):
         model.train()
         train_loss = 0
@@ -363,13 +363,13 @@ if __name__ == "__main__":
     torch.save(model.state_dict(), MODEL_PATH)
     loss_curve_path = save_root / "training_loss_curve.png"
     plot_training_loss(loss_history, loss_curve_path, show_image=not args.no_show)
-    print(f"📉 Training loss curve saved: {loss_curve_path}")
+    print(f"Training loss curve saved: {loss_curve_path}")
 
     # --- Evaluation Phase ---
     model.eval()
 
     # 1) Generate images for specified classes and plot with real image comparisons
-    print("🎨 Generating and labeling REAL / GENERATED images...")
+    print("Generating and labeling REAL / GENERATED images...")
     class_to_idx = train_loader.dataset.class_to_idx
     idx_to_class = {idx: name for name, idx in class_to_idx.items()}
     target_ids = resolve_target_class_ids(class_to_idx, args.target)
@@ -401,7 +401,7 @@ if __name__ == "__main__":
     # - real: Real images from the test set
     # - fake: Reconstructed images from the same test set batch
     # Note: Using a simplified 64-dim version for speed; not directly comparable to standard 2048-dim FID.
-    print("📊 Calculating FID Metric...")
+    print("Calculating FID Metric...")
     fid_metric = FrechetInceptionDistance(feature=64).to("cpu")
     
     with torch.no_grad():
@@ -420,11 +420,11 @@ if __name__ == "__main__":
             fid_metric.update(preprocess(fake_data), real=False)
             
     fid_score = fid_metric.compute()
-    print(f"✅ FID Score (64-dim): {fid_score:.4f}")
+    print(f"FID Score (64-dim): {fid_score:.4f}")
 
     # 3) Calculate Inception Score:
     # Sample from prior z~N(0, I) to measure sample diversity and classifiability
-    print("📊 Calculating Inception Score...")
+    print("Calculating Inception Score...")
     is_metric = InceptionScore().to("cpu")
     with torch.no_grad():
         # Generate 1000 images for a more stable IS
@@ -436,4 +436,4 @@ if __name__ == "__main__":
         is_metric.update((gen_imgs * 255).clamp(0, 255).to(torch.uint8).repeat(1, 3, 1, 1).to("cpu"))
         
     is_mean, is_std = is_metric.compute()
-    print(f"✅ Inception Score: {is_mean:.4f} ± {is_std:.4f}")
+    print(f"Inception Score: {is_mean:.4f} ± {is_std:.4f}")
